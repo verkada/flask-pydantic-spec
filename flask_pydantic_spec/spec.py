@@ -93,10 +93,6 @@ class FlaskPydanticSpec:
         :greedy:    collect all the routes
         :strict:    collect all the routes decorated by this instance
         """
-        # bypass generating api doc for endpoint set publish as false
-        if not getattr(func, "publish", False):
-            return True
-
         if self.config.MODE == "greedy":
             return False
         elif self.config.MODE == "strict":
