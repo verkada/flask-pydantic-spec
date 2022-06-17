@@ -94,7 +94,7 @@ class FlaskPydanticSpec:
         :strict:    collect all the routes decorated by this instance
         """
         # bypass generating api doc for endpoint set publish as false
-        if not getattr(func, "publish", True):
+        if not getattr(func, "publish", False):
             return True
 
         if self.config.MODE == "greedy":
@@ -120,7 +120,7 @@ class FlaskPydanticSpec:
         deprecated: bool = False,
         before: Optional[Callable] = None,
         after: Optional[Callable] = None,
-        publish: bool = True,
+        publish: bool = False,
     ) -> Callable:
         """
         - validate query, body, headers in request
