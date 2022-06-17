@@ -120,7 +120,7 @@ class FlaskPydanticSpec:
         deprecated: bool = False,
         before: Optional[Callable] = None,
         after: Optional[Callable] = None,
-        publish: bool = True,
+        publish: bool = False,
     ) -> Callable:
         """
         - validate query, body, headers in request
