@@ -105,6 +105,11 @@ class FlaskPydanticSpec:
                 return True
             return False
 
+    def check_publish_only(self, func: Callable) -> bool:
+        if self.config.MODE == "publish_only":
+            if not getattr(func, "publish", False):
+                return True
+
     def validate(
         self,
         query: Optional[Type[BaseModel]] = None,
@@ -260,6 +265,7 @@ class FlaskPydanticSpec:
                     path in self.class_view_apispec
                     and method.lower() in self.class_view_apispec[path]
                 ):
+                    # flask class view
                     summary = self.class_view_apispec[path][method.lower()]["summary"]
                     operation_id = camelize(method.lower() + name, False)
                     desc = self.class_view_apispec[path][method.lower()]["description"]
@@ -272,8 +278,11 @@ class FlaskPydanticSpec:
                         "requestBody", None
                     )
                     publish = self.class_view_apispec[path][method.lower()]["publish"]
-                    if not publish:
+                    if self.config.MODE == "publish_only" and not publish:
                         continue
+                else:
+                    # flask function view
+                    self.check_publish_only(func)
 
                 routes[path][method.lower()] = {
                     "summary": summary or f"{name} <{method}>",
