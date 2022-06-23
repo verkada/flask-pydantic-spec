@@ -243,7 +243,6 @@ class FlaskPydanticSpec:
         tags: Dict[str, Any] = {}
         for route in self.backend.find_routes():
             path, parameters = self.backend.parse_path(route)
-            routes[path] = routes.get(path, {})
             for method, func in self.backend.parse_func(route):
                 if self.backend.bypass(func, method) or self.bypass(func):
                     continue
@@ -285,6 +284,8 @@ class FlaskPydanticSpec:
                     if self.bypass_unpublish(func):
                         continue
 
+                if path not in routes:
+                    routes[path] = dict()
                 routes[path][method.lower()] = {
                     "summary": summary or f"{name} <{method}>",
                     "operationId": operation_id,
