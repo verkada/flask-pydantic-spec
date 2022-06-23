@@ -105,10 +105,10 @@ class FlaskPydanticSpec:
                 return True
             return False
 
-    def check_publish_only(self, func: Callable) -> bool:
+    def bypass_unpublish(self, func: Callable) -> bool:
+        """ bypass unpublished APIs under publish_only mode"""
         if self.config.MODE == "publish_only":
-            if not getattr(func, "publish", False):
-                return True
+            return not getattr(func, "publish", False)
 
     def validate(
         self,
@@ -282,7 +282,8 @@ class FlaskPydanticSpec:
                         continue
                 else:
                     # flask function view
-                    self.check_publish_only(func)
+                    if self.bypass_unpublish(func):
+                        continue
 
                 routes[path][method.lower()] = {
                     "summary": summary or f"{name} <{method}>",
