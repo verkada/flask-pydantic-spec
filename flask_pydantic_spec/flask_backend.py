@@ -135,8 +135,9 @@ class FlaskBackend:
                 raw_body = gzip.decompress(request.stream.read()).decode(encoding="utf-8")
                 parsed_body = json.loads(raw_body)
             else:
-                self.logger.info(f"request: {request}")
-                parsed_body = request.get_json(force=True) or {}
+                self.logger.info(f"request: {request.content_type}, {request.content_encoding}")
+                parsed_body = request.get_data()
+                # parsed_body = request.get_json(force=True) or {}
         elif request.content_type and "multipart/form-data" in request.content_type:
             parsed_body = request.form or {}
         else:
