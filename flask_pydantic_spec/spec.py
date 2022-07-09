@@ -1,6 +1,7 @@
 from collections import defaultdict
 from functools import wraps
 from typing import Mapping, Optional, Type, Union, Callable, Iterable, Any, Dict, cast
+import json
 
 from flask import Flask, Response as FlaskResponse
 from pydantic import BaseModel
@@ -64,6 +65,8 @@ class FlaskPydanticSpec:
             self.register(app)
         self.class_view_api_info = dict()  # class view info when adding validate decorator
         self.class_view_apispec = dict()  # convert class_view_api_info into openapi spec
+        self.routes_by_category = dict()  # routes openapi info by category as key in the dict
+        self._spec_by_category = dict()  # openapi spec by category
 
     def register(self, app: Flask) -> None:
         """
@@ -83,6 +86,19 @@ class FlaskPydanticSpec:
         if not hasattr(self, "_spec"):
             self._spec = self._generate_spec()
         return self._spec
+
+    def spec_by_category(self, category) -> Mapping[str, Any]:
+        """
+        get OpenAPI spec by category
+        :return:
+        """
+        if category not in self._spec_by_category:
+            self._spec_by_category[category] = self._generate_spec_common(
+                self.routes_by_category[category]
+            )
+        return json.loads(
+            json.dumps(self._spec_by_category[category])
+        )  # use json to sanitize format into valid foramt
 
     def bypass(self, func: Callable) -> bool:
         """
@@ -122,6 +138,7 @@ class FlaskPydanticSpec:
         before: Optional[Callable] = None,
         after: Optional[Callable] = None,
         publish: bool = False,
+        category: str = "default",
     ) -> Callable:
         """
         - validate query, body, headers in request
@@ -169,6 +186,7 @@ class FlaskPydanticSpec:
                     self.class_view_api_info[view_name][method] = {}
                 summary, desc = parse_comments(func)
                 self.class_view_api_info[view_name][method]["publish"] = publish
+                self.class_view_api_info[view_name][method]["category"] = category
                 self.class_view_api_info[view_name][method]["summary"] = summary
                 self.class_view_api_info[view_name][method]["description"] = desc
                 self.class_view_api_info[view_name][method]["responses"] = {
@@ -230,9 +248,37 @@ class FlaskPydanticSpec:
             # register decorator
             setattr(validation, "_decorator", self)
             setattr(validation, "publish", publish)
+            setattr(validation, "category", category)
             return validation
 
         return decorate_validation
+
+    def _generate_spec_common(self, routes):
+        spec = {
+            "openapi": self.config.OPENAPI_VERSION,
+            "info": {
+                **self.config.INFO,
+                **{"title": self.config.TITLE, "version": self.config.VERSION,},
+            },
+            "tags": list(self.tags.values()),
+            "paths": {**routes},
+            "components": {"schemas": {**self._get_model_definitions()}},
+        }
+
+        if self.config.SECURITY:
+            spec["security"] = self.config.SECURITY
+
+        if self.config.SECURITY_SCHEMES:
+            spec["components"]["securitySchemes"] = self.config.SECURITY_SCHEMES
+
+        if self.config.SERVERS:
+            spec["servers"] = self.config.SERVERS
+
+        if self.config.EXTRA_FIELDS:
+            for k, v in self.config.EXTRA_FIELDS.items():
+                spec[k] = v
+
+        return spec
 
     def _generate_spec(self) -> Mapping[str, Any]:
         """
@@ -240,7 +286,7 @@ class FlaskPydanticSpec:
         """
         tag_lookup = {tag["name"]: tag for tag in self.config.TAGS}
         routes: Dict[str, Any] = {}
-        tags: Dict[str, Any] = {}
+        self.tags: Dict[str, Any] = {}
         for route in self.backend.find_routes():
             path, parameters = self.backend.parse_path(route)
             for method, func in self.backend.parse_func(route):
@@ -251,8 +297,8 @@ class FlaskPydanticSpec:
                 summary, desc = parse_comments(func)
                 func_tags = getattr(func, "tags", ())
                 for tag in func_tags:
-                    if tag not in tags:
-                        tags[tag] = tag_lookup.get(tag, {"name": tag})
+                    if tag not in self.tags:
+                        self.tags[tag] = tag_lookup.get(tag, {"name": tag})
 
                 request_body = parse_request(func)
 
@@ -277,16 +323,33 @@ class FlaskPydanticSpec:
                         "requestBody", None
                     )
                     publish = self.class_view_apispec[path][method.lower()]["publish"]
+                    category = self.class_view_apispec[path][method.lower()]["category"]
                     if self.config.MODE == "publish_only" and not publish:
                         continue
                 else:
                     # flask function view
                     if self.bypass_unpublish(func):
                         continue
+                    category = getattr(func, "category", "default")
 
                 if path not in routes:
                     routes[path] = dict()
                 routes[path][method.lower()] = {
+                    "summary": summary or f"{name} <{method}>",
+                    "operationId": operation_id,
+                    "description": desc or "",
+                    "tags": func_tag,
+                    "parameters": parameters,
+                    "responses": responses,
+                }
+
+                if category not in self.routes_by_category:
+                    self.routes_by_category[category] = dict()
+
+                if path not in self.routes_by_category[category]:
+                    self.routes_by_category[category][path] = dict()
+
+                self.routes_by_category[category][path][method.lower()] = {
                     "summary": summary or f"{name} <{method}>",
                     "operationId": operation_id,
                     "description": desc or "",
@@ -302,32 +365,11 @@ class FlaskPydanticSpec:
                     routes[path][method.lower()]["requestBody"] = self._parse_request_body(
                         request_body
                     )
+                    self.routes_by_category[category][path][method.lower()][
+                        "requestBody"
+                    ] = self._parse_request_body(request_body)
 
-        spec = {
-            "openapi": self.config.OPENAPI_VERSION,
-            "info": {
-                **self.config.INFO,
-                **{"title": self.config.TITLE, "version": self.config.VERSION,},
-            },
-            "tags": list(tags.values()),
-            "paths": {**routes},
-            "components": {"schemas": {**self._get_model_definitions()}},
-        }
-
-        if self.config.SECURITY:
-            spec["security"] = self.config.SECURITY
-
-        if self.config.SECURITY_SCHEMES:
-            spec["components"]["securitySchemes"] = self.config.SECURITY_SCHEMES
-
-        if self.config.SERVERS:
-            spec["servers"] = self.config.SERVERS
-
-        if self.config.EXTRA_FIELDS:
-            for k, v in self.config.EXTRA_FIELDS.items():
-                spec[k] = v
-
-        return spec
+        return self._generate_spec_common(routes)
 
     def _validate_property(self, property: Mapping[str, Any]) -> Dict[str, Any]:
         allowed_fields = {
