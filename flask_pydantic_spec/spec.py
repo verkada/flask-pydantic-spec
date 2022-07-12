@@ -67,6 +67,7 @@ class FlaskPydanticSpec:
         self.class_view_apispec = dict()  # convert class_view_api_info into openapi spec
         self.routes_by_category = dict()  # routes openapi info by category as key in the dict
         self._spec_by_category = dict()  # openapi spec by category
+        self._models_by_category = defaultdict(dict)  # model schemas by category
 
     def register(self, app: Flask) -> None:
         """
@@ -94,7 +95,7 @@ class FlaskPydanticSpec:
         """
         if category not in self._spec_by_category:
             self._spec_by_category[category] = self._generate_spec_common(
-                self.routes_by_category[category]
+                self.routes_by_category[category], category
             )
         return json.loads(
             json.dumps(self._spec_by_category[category])
@@ -204,6 +205,9 @@ class FlaskPydanticSpec:
                         _model = model
                     if _model:
                         self.models[_model.__name__] = self._get_open_api_schema(_model.schema())
+                        self._models_by_category[category][
+                            _model.__name__
+                        ] = self._get_open_api_schema(_model.schema())
                     setattr(validation, name, model)
 
                     if class_view:
@@ -232,6 +236,9 @@ class FlaskPydanticSpec:
                     if model:
                         assert not isinstance(model, RequestBase)
                         self.models[model.__name__] = self._get_open_api_schema(model.schema())
+                        self._models_by_category[category][
+                            model.__name__
+                        ] = self._get_open_api_schema(_model.schema())
                         if class_view:
                             for k, v in resp.generate_spec().items():
                                 self.class_view_api_info[view_name][method]["responses"][k] = v
@@ -253,7 +260,7 @@ class FlaskPydanticSpec:
 
         return decorate_validation
 
-    def _generate_spec_common(self, routes):
+    def _generate_spec_common(self, routes, category=None):
         spec = {
             "openapi": self.config.OPENAPI_VERSION,
             "info": {
@@ -262,7 +269,7 @@ class FlaskPydanticSpec:
             },
             "tags": list(self.tags.values()),
             "paths": {**routes},
-            "components": {"schemas": {**self._get_model_definitions()}},
+            "components": {"schemas": {**self._get_model_definitions(category)}},
         }
 
         if self.config.SECURITY:
@@ -431,12 +438,16 @@ class FlaskPydanticSpec:
                 result[key] = value
         return cast(Mapping[str, Any], nested_alter(result, "$ref", _move_schema_reference))
 
-    def _get_model_definitions(self) -> Dict[str, Any]:
+    def _get_model_definitions(self, category=None) -> Dict[str, Any]:
         """
         handle nested models
         """
         definitions: Dict[str, Any] = {}
-        for model, schema in self.models.items():
+        if category:
+            models = self._models_by_category[category]
+        else:
+            models = self.models
+        for model, schema in models.items():
             if model not in definitions.keys():
                 definitions[model] = schema
             if "definitions" in schema:
