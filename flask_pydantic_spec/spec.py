@@ -92,6 +92,9 @@ class FlaskPydanticSpec:
         get OpenAPI spec by category
         :return:
         """
+        if not hasattr(self, "_spec"):
+            self._spec = self._generate_spec()
+
         if category not in self._spec_by_category:
             self._spec_by_category[category] = self._generate_spec_common(
                 self.routes_by_category[category]
