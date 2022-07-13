@@ -1,7 +1,7 @@
 from collections import defaultdict
 from functools import wraps
 from typing import Mapping, Optional, Type, Union, Callable, Iterable, Any, Dict, cast
-import json
+# import json
 
 from flask import Flask, Response as FlaskResponse
 from pydantic import BaseModel
@@ -101,9 +101,10 @@ class FlaskPydanticSpec:
             self._spec_by_category[category] = self._generate_spec_common(
                 self.routes_by_category[category], category
             )
-        return json.loads(
-            json.dumps(self._spec_by_category[category])
-        )  # use json to sanitize format into valid foramt
+#        return json.loads(
+#            json.dumps(self._spec_by_category[category])
+#        )  # use json to sanitize format into valid foramt
+        return self._spec_by_category[category]
 
     def bypass(self, func: Callable) -> bool:
         """
