@@ -195,7 +195,9 @@ class FlaskBackend:
 
         before(request, response, req_validation_error, None)
         if req_validation_error:
-            assert response is not None  # response is set when req_validation_error occurs
+            assert (
+                response is not None
+            )  # response is set when req_validation_error occurs
             abort(response)
 
         response = make_response(func(*args, **kwargs))
