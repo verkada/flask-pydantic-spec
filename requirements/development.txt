@@ -1,7 +1,7 @@
 -r production.txt
 openapi-spec-validator>=0.2.9, <0.3
 pytest==7.1.2
-flake8>=4.0.1, <5
+flake8==7.3.0
 flask==2.2.5
 werkzeug==2.2.3
 requests==2.31.0
