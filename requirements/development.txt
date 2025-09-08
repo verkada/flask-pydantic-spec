@@ -6,4 +6,4 @@ flask==2.2.5
 werkzeug==2.2.3
 requests==2.31.0
 black==24.4.2
-mypy==0.971
+mypy==1.17.1

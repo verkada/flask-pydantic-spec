@@ -195,7 +195,7 @@ class FlaskBackend:
 
         before(request, response, req_validation_error, None)
         if req_validation_error:
-            abort(response)  # type: ignore
+            abort(response)
 
         response = make_response(func(*args, **kwargs))
 
