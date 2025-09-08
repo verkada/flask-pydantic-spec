@@ -1,7 +1,7 @@
 import re
 from typing import Optional, Type, Iterable, Mapping, Any, Dict, List
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 
 class ResponseBase:

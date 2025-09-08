@@ -3,9 +3,9 @@ from functools import wraps
 from typing import Mapping, Optional, Type, Union, Callable, Iterable, Any, Dict, cast
 
 from flask import Flask, Response as FlaskResponse
-from pydantic import BaseModel
 from inflection import camelize
 from nested_lookup import nested_alter
+from pydantic.v1 import BaseModel
 
 from . import Request
 from .config import Config
