@@ -77,7 +77,10 @@ class FlaskBackend:
             if converter == "any":
                 schema = {
                     "type": "array",
-                    "items": {"type": "string", "enum": args,},
+                    "items": {
+                        "type": "string",
+                        "enum": args,
+                    },
                 }
             elif converter == "int":
                 schema = {
@@ -114,7 +117,12 @@ class FlaskBackend:
                 schema = {"type": "string"}
 
             parameters.append(
-                {"name": variable, "in": "path", "required": True, "schema": schema,}
+                {
+                    "name": variable,
+                    "in": "path",
+                    "required": True,
+                    "schema": schema,
+                }
             )
 
         return "".join(subs), parameters
@@ -153,9 +161,11 @@ class FlaskBackend:
             "context",
             Context(
                 query=query.parse_obj(req_query) if query else None,
-                body=getattr(body, "model").parse_obj(parsed_body)
-                if body and getattr(body, "model")
-                else None,
+                body=(
+                    getattr(body, "model").parse_obj(parsed_body)
+                    if body and getattr(body, "model")
+                    else None
+                ),
                 headers=headers.parse_obj(req_headers or {}) if headers else None,
                 cookies=cookies.parse_obj(req_cookies or {}) if cookies else None,
             ),
@@ -209,7 +219,9 @@ class FlaskBackend:
         from flask import jsonify
 
         self.app.add_url_rule(
-            self.config.spec_url, "openapi", lambda: jsonify(self.validator.spec),
+            self.config.spec_url,
+            "openapi",
+            lambda: jsonify(self.validator.spec),
         )
 
         for ui in PAGES:

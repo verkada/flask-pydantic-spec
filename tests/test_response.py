@@ -91,7 +91,10 @@ def test_multipart_form_spec():
             "schema": {
                 "type": "object",
                 "properties": {
-                    "uid": {"type": "integer", "title": "Uid",},
+                    "uid": {
+                        "type": "integer",
+                        "title": "Uid",
+                    },
                     "limit": {"type": "integer", "title": "Limit"},
                     "name": {"type": "string", "title": "Name"},
                     "fileName": {"type": "string", "format": "binary"},
@@ -108,7 +111,9 @@ def test_multipart_form_no_model():
         "multipart/form-data": {
             "schema": {
                 "type": "object",
-                "properties": {"file": {"type": "string", "format": "binary"},},
+                "properties": {
+                    "file": {"type": "string", "format": "binary"},
+                },
             }
         }
     }

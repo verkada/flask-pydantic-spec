@@ -73,15 +73,15 @@ class FlaskPydanticSpec:
         self.models: Dict[str, Any] = {}
         if app:
             self.register(app)
-        self.class_view_api_info: Dict[
-            str, dict
-        ] = dict()  # class view info when adding validate decorator
-        self.class_view_apispec: Dict[
-            str, dict
-        ] = dict()  # convert class_view_api_info into openapi spec
-        self.routes_by_category: Dict[
-            str, dict
-        ] = dict()  # routes openapi info by category as key in the dict
+        self.class_view_api_info: Dict[str, dict] = (
+            dict()
+        )  # class view info when adding validate decorator
+        self.class_view_apispec: Dict[str, dict] = (
+            dict()
+        )  # convert class_view_api_info into openapi spec
+        self.routes_by_category: Dict[str, dict] = (
+            dict()
+        )  # routes openapi info by category as key in the dict
         self._spec_by_category: Dict[str, Mapping] = dict()  # openapi spec by category
         self._models_by_category: Dict[str, dict] = defaultdict(
             dict
@@ -234,9 +234,9 @@ class FlaskPydanticSpec:
                         self.models[_model.__name__] = self._get_open_api_schema(
                             _model.schema()
                         )
-                        self._models_by_category[category][
-                            _model.__name__
-                        ] = self._get_open_api_schema(_model.schema())
+                        self._models_by_category[category][_model.__name__] = (
+                            self._get_open_api_schema(_model.schema())
+                        )
                     setattr(validation, name, model)
 
                     if class_view and _model:
@@ -257,9 +257,9 @@ class FlaskPydanticSpec:
                         param for param in params if param["in"] == "query"
                     ]
                     if hasattr(validation, "body"):
-                        self.class_view_api_info[view_name][method][
-                            "requestBody"
-                        ] = parse_request(validation)
+                        self.class_view_api_info[view_name][method]["requestBody"] = (
+                            parse_request(validation)
+                        )
 
             if resp:
                 for model in resp.models:
@@ -268,9 +268,9 @@ class FlaskPydanticSpec:
                         self.models[model.__name__] = self._get_open_api_schema(
                             model.schema()
                         )
-                        self._models_by_category[category][
-                            model.__name__
-                        ] = self._get_open_api_schema(model.schema())
+                        self._models_by_category[category][model.__name__] = (
+                            self._get_open_api_schema(model.schema())
+                        )
                         if class_view:
                             for k, v in resp.generate_spec().items():
                                 self.class_view_api_info[view_name][method][
@@ -421,9 +421,9 @@ class FlaskPydanticSpec:
                     routes[path][method.lower()]["deprecated"] = True
 
                 if request_body:
-                    routes[path][method.lower()][
-                        "requestBody"
-                    ] = self._parse_request_body(request_body)
+                    routes[path][method.lower()]["requestBody"] = (
+                        self._parse_request_body(request_body)
+                    )
                     self.routes_by_category[category][path][method.lower()][
                         "requestBody"
                     ] = self._parse_request_body(request_body)

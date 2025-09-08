@@ -106,5 +106,8 @@ def test_parse_params():
         "name": "uid",
         "in": "query",
         "required": True,
-        "schema": {"title": "Uid", "type": "integer",},
+        "schema": {
+            "title": "Uid",
+            "type": "integer",
+        },
     }
