@@ -231,10 +231,7 @@ class MultipartFormRequest(RequestBase):
                         "type": "object",
                         "properties": {
                             **additional_properties,
-                            self.file_key: {
-                                "type": "string",
-                                "format": self.encoding,
-                            },
+                            self.file_key: {"type": "string", "format": self.encoding,},
                         },
                     }
                 }

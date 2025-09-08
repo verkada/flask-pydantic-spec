@@ -52,8 +52,7 @@ def ping():
 
 @app.route("/api/user", methods=["GET"])
 @api.validate(
-    query=QueryParams,
-    resp=Response(HTTP_200=Users, HTTP_401=None),
+    query=QueryParams, resp=Response(HTTP_200=Users, HTTP_401=None),
 )
 def get_users():
     allowed_names = ["james", "annabel", "bethany"]
@@ -186,12 +185,8 @@ def test_query_params(client):
     assert resp.status_code == 200
     assert len(resp.json["data"]) == 2
     assert resp.json["data"] == [
-        {
-            "name": "bethany",
-        },
-        {
-            "name": "james",
-        },
+        {"name": "bethany",},
+        {"name": "james",},
     ]
 
 
@@ -237,10 +232,7 @@ def test_flask_post_gzip(client):
     resp = client.post(
         "/api/user/flask?order=0",
         data=compressed,
-        headers={
-            "content-type": "application/json",
-            "content-encoding": "gzip",
-        },
+        headers={"content-type": "application/json", "content-encoding": "gzip",},
     )
     assert resp.status_code == 200
     assert resp.json["name"] == "flask"
@@ -255,10 +247,7 @@ def test_flask_post_gzip_failure(client):
     resp = client.post(
         "/api/user/flask?order=0",
         data=compressed,
-        headers={
-            "content-type": "application/json",
-            "content-encoding": "gzip",
-        },
+        headers={"content-type": "application/json", "content-encoding": "gzip",},
     )
     assert resp.status_code == 400
     assert resp.json == [
