@@ -5,7 +5,7 @@ import pytest
 from flask import Flask
 from typing import List
 from openapi_spec_validator import validate_v3_spec
-from pydantic import BaseModel, StrictFloat, Field
+from pydantic.v1 import BaseModel, Field, StrictFloat
 
 from flask_pydantic_spec import Response
 from flask_pydantic_spec.flask_backend import FlaskBackend

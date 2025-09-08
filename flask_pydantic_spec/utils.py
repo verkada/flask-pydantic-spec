@@ -16,9 +16,9 @@ from typing import (
     Type,
 )
 
+from pydantic.v1 import BaseModel
+from pydantic.v1.fields import SHAPE_DICT, SHAPE_LIST
 from werkzeug.datastructures import MultiDict
-from pydantic import BaseModel
-from pydantic.fields import SHAPE_LIST, SHAPE_DICT
 from werkzeug.routing import Rule
 
 from .types import Response, RequestBase, Request

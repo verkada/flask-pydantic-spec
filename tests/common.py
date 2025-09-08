@@ -2,7 +2,7 @@ from datetime import date
 from enum import IntEnum, Enum
 from typing import List, Optional
 
-from pydantic import BaseModel, root_validator
+from pydantic.v1 import BaseModel, root_validator
 
 
 class Order(IntEnum):

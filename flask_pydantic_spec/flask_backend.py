@@ -5,7 +5,6 @@ import logging
 from typing import Optional, Mapping, Callable, Any, Tuple, List, Type, Iterable, Dict
 from dataclasses import dataclass
 
-from pydantic import ValidationError, BaseModel
 from flask import (
     request,
     abort,
@@ -15,6 +14,7 @@ from flask import (
     Flask,
     Response as FlaskResponse,
 )
+from pydantic.v1 import BaseModel, ValidationError
 from werkzeug.datastructures import Headers
 from werkzeug.routing import Rule, parse_converter_args
 
