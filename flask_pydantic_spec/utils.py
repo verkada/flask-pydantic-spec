@@ -50,10 +50,15 @@ def parse_request(func: Callable) -> Mapping[str, Any]:
         request_body = getattr(func, "body")
         if isinstance(request_body, RequestBase):
             result: Mapping[str, Any] = request_body.generate_spec()
-        elif issubclass(request_body, BaseModel):
-            result = Request(request_body).generate_spec()
         else:
-            result = {}
+            try:
+                if issubclass(request_body, BaseModel):
+                    result = Request(request_body).generate_spec()
+                else:
+                    result = {}
+            except TypeError:
+                # request_body is not a class (e.g., generic type)
+                result = {}
         return result
     return {}
 

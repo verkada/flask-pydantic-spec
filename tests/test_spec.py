@@ -4,8 +4,8 @@ from typing import Optional
 import pytest
 from flask import Flask
 from typing import List
-from openapi_spec_validator import validate_v3_spec
-from pydantic.v1 import BaseModel, Field, StrictFloat
+from openapi_spec_validator import OpenAPIV30SpecValidator
+from pydantic.v1 import BaseModel, StrictFloat, Field
 
 from flask_pydantic_spec import Response
 from flask_pydantic_spec.flask_backend import FlaskBackend
@@ -94,49 +94,57 @@ api_customize_backend = FlaskPydanticSpec(backend=FlaskBackend)
 def create_app():
     app = Flask(__name__)
 
-    @app.route("/foo")
-    @api.validate()
+    @app.get("/foo")
+    @api.validate(resp=Response(HTTP_200=ExampleModel))
     def foo():
         pass
 
-    @app.route("/bar")
-    @api_strict.validate()
+    @app.get("/bar")
+    @api_strict.validate(resp=Response(HTTP_200=ExampleModel))
     def bar():
         pass
 
-    @app.route("/lone", methods=["GET"])
+    @app.get("/lone")
+    @api.validate(
+        resp=Response(HTTP_200=ExampleNestedList, HTTP_400=ExampleNestedModel),
+        tags=["lone"],
+    )
     def lone_get():
         pass
 
-    @app.route("/lone", methods=["POST"])
+    @app.post("/lone")
     @api.validate(
         body=Request(ExampleModel),
-        resp=Response(HTTP_200=ExampleNestedList, HTTP_400=ExampleNestedModel),
+        resp=Response(HTTP_200=List[ExampleModel], HTTP_400=ExampleNestedModel),
         tags=["lone"],
         deprecated=True,
     )
     def lone_post():
         pass
 
-    @app.route("/query", methods=["GET"])
-    @api.validate(query=ExampleQuery)
+    @app.get("/query")
+    @api.validate(
+        query=ExampleQuery,
+        resp=Response(HTTP_200=List[ExampleModel]),
+        tags=["alpha"],
+    )
     def get_query():
         pass
 
-    @app.route("/file")
+    @app.get("/file")
     @api.validate(resp=FileResponse())
     def get_file():
         pass
 
-    @app.route("/file", methods=["POST"])
+    @app.post("/file")
     @api.validate(
         body=Request(content_type="application/octet-stream"),
-        resp=Response(HTTP_200=None),
+        resp=FileResponse(),
     )
     def post_file():
         pass
 
-    @app.route("/multipart-file", methods=["POST"])
+    @app.post("/multipart-file")
     @api.validate(
         body=MultipartFormRequest(ExampleModel), resp=Response(HTTP_200=ExampleModel)
     )
@@ -197,7 +205,8 @@ def test_valid_openapi_spec():
     app = create_app()
     api.register(app)
     spec = api.spec
-    validate_v3_spec(spec)
+    OpenAPIV30SpecValidator(spec).validate()
+    assert OpenAPIV30SpecValidator(spec).is_valid()
 
 
 def test_openapi_tags():

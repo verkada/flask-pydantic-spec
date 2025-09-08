@@ -1,5 +1,5 @@
 import re
-from typing import Optional, Type, Iterable, Mapping, Any, Dict, List
+from typing import Optional, Type, Iterable, Mapping, Any, Dict, List, NamedTuple
 
 from pydantic.v1 import BaseModel
 
@@ -47,10 +47,22 @@ class Response(ResponseBase):
             else:
                 assert key in DEFAULT_CODE_DESC, "invalid HTTP status code"
                 if value:
-                    assert issubclass(value, BaseModel), "invalid `pydantic.BaseModel`"
-                    self.code_models[key] = value
+                    if self.is_list_type(value):
+                        assert issubclass(
+                            value.__args__[0], BaseModel
+                        ), "invalid `pydantic.BaseModel`"
+                        self.code_models[key] = value.__args__[0]
+                    else:
+                        assert issubclass(
+                            value, BaseModel
+                        ), "invalid `pydantic.BaseModel`"
+                        self.code_models[key] = value
                 else:
                     self.codes.append(key)
+
+    @staticmethod
+    def is_list_type(value: Any) -> bool:
+        return hasattr(value, "__origin__") and value.__origin__ is list
 
     def has_model(self) -> bool:
         """
