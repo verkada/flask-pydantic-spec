@@ -205,7 +205,6 @@ def test_valid_openapi_spec():
     app = create_app()
     api.register(app)
     spec = api.spec
-    OpenAPIV30SpecValidator(spec).validate()
     assert OpenAPIV30SpecValidator(spec).is_valid()
 
 
