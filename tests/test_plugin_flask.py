@@ -135,7 +135,7 @@ def test_flask_validate(client):
     assert resp.status_code == 422
     assert resp.headers.get("X-Error") == "Validation Error"
 
-    client.set_cookie("flask", "pub", "abcdefg")
+    client.set_cookie("pub", "abcdefg")
     resp = client.post(
         "/api/user/flask?order=1",
         data=json.dumps(dict(name="flask", limit=10)),
@@ -233,7 +233,7 @@ def test_flask_post_gzip(client):
     body = dict(name="flask", limit=10)
     compressed = gzip.compress(bytes(json.dumps(body), encoding="utf-8"))
 
-    client.set_cookie("flask", "pub", "abcdefg")
+    client.set_cookie("pub", "abcdefg")
     resp = client.post(
         "/api/user/flask?order=0",
         data=compressed,
@@ -251,7 +251,7 @@ def test_flask_post_gzip_failure(client):
     body = dict(name="flask")
     compressed = gzip.compress(bytes(json.dumps(body), encoding="utf-8"))
 
-    client.set_cookie("flask", "pub", "abcdefg")
+    client.set_cookie("pub", "abcdefg")
     resp = client.post(
         "/api/user/flask?order=0",
         data=compressed,

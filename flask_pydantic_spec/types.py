@@ -1,5 +1,5 @@
 import re
-from typing import Optional, Type, Iterable, Mapping, Any, Dict, List, NamedTuple
+from typing import Optional, Type, Iterable, Mapping, Any, Dict, List
 
 from pydantic.v1 import BaseModel
 
