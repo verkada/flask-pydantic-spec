@@ -94,17 +94,17 @@ api_customize_backend = FlaskPydanticSpec(backend=FlaskBackend)
 def create_app():
     app = Flask(__name__)
 
-    @app.get("/foo")
+    @app.route("/foo")
     @api.validate(resp=Response(HTTP_200=ExampleModel))
     def foo():
         pass
 
-    @app.get("/bar")
+    @app.route("/bar")
     @api_strict.validate(resp=Response(HTTP_200=ExampleModel))
     def bar():
         pass
 
-    @app.get("/lone")
+    @app.route("/lone", methods=["GET"])
     @api.validate(
         resp=Response(HTTP_200=ExampleNestedList, HTTP_400=ExampleNestedModel),
         tags=["lone"],
@@ -112,7 +112,7 @@ def create_app():
     def lone_get():
         pass
 
-    @app.post("/lone")
+    @app.route("/lone", methods=["POST"])
     @api.validate(
         body=Request(ExampleModel),
         resp=Response(HTTP_200=List[ExampleModel], HTTP_400=ExampleNestedModel),
@@ -122,7 +122,7 @@ def create_app():
     def lone_post():
         pass
 
-    @app.get("/query")
+    @app.route("/query", methods=["GET"])
     @api.validate(
         query=ExampleQuery,
         resp=Response(HTTP_200=List[ExampleModel]),
@@ -131,12 +131,12 @@ def create_app():
     def get_query():
         pass
 
-    @app.get("/file")
+    @app.route("/file")
     @api.validate(resp=FileResponse())
     def get_file():
         pass
 
-    @app.post("/file")
+    @app.route("/file", methods=["POST"])
     @api.validate(
         body=Request(content_type="application/octet-stream"),
         resp=FileResponse(),
@@ -144,7 +144,7 @@ def create_app():
     def post_file():
         pass
 
-    @app.post("/multipart-file")
+    @app.route("/multipart-file", methods=["POST"])
     @api.validate(
         body=MultipartFormRequest(ExampleModel), resp=Response(HTTP_200=ExampleModel)
     )
