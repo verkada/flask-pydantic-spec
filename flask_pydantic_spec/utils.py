@@ -17,7 +17,7 @@ from typing import (
 )
 
 from werkzeug.datastructures import MultiDict
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 from werkzeug.routing import Rule
 
 from .types import Response, RequestBase, Request
@@ -209,15 +209,10 @@ def parse_multi_dict(
     result = {}
     for key, value in input.to_dict(flat=False).items():
         if len(value) == 1:
-            value_to_use = value[0]
-            if not schema or (
-                key in schema.__fields__
-                and schema.__fields__[key].shape in [SHAPE_LIST, SHAPE_DICT]
-            ):
-                try:
-                    value_to_use = json.loads(value[0])
-                except (TypeError, JSONDecodeError):
-                    pass
+            try:
+                value_to_use = json.loads(value[0])
+            except (TypeError, JSONDecodeError):
+                value_to_use = value[0]
         else:
             value_to_use = value
         result[key] = value_to_use
