@@ -161,9 +161,11 @@ class FlaskBackend:
             "context",
             Context(
                 query=query.parse_obj(req_query) if query else None,
-                body=getattr(body, "model").parse_obj(parsed_body)
-                if body and getattr(body, "model")
-                else None,
+                body=(
+                    getattr(body, "model").parse_obj(parsed_body)
+                    if body and getattr(body, "model")
+                    else None
+                ),
                 headers=headers.parse_obj(req_headers or {}) if headers else None,
                 cookies=cookies.parse_obj(req_cookies or {}) if cookies else None,
             ),
@@ -193,7 +195,10 @@ class FlaskBackend:
 
         before(request, response, req_validation_error, None)
         if req_validation_error:
-            abort(response)  # type: ignore
+            assert (
+                response is not None
+            )  # response is set when req_validation_error occurs
+            abort(response)
 
         response = make_response(func(*args, **kwargs))
 
