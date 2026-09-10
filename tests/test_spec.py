@@ -273,3 +273,40 @@ def test_class_view_path_with_typed_converter_is_published():
     assert list(api_publish_only.spec["paths"]["/widgets/{widget_id}"].keys()) == [
         "get"
     ]
+
+
+api_publish_only_gadgets = FlaskPydanticSpec("flask", mode="publish_only")
+
+
+class UnpublishedGadgetView(MethodView):
+    # func.__qualname__ must resolve to just "UnpublishedGadgetView.get" for
+    # class_view_api_info's decoration-time bookkeeping to key correctly --
+    # defining this class inside the test function (nested scope) breaks
+    # that (qualname becomes "test_name.<locals>.UnpublishedGadgetView.get",
+    # so view_name, *_, method = qualname.split(".") picks up the *test
+    # function's* name instead), same pitfall as WidgetView above.
+    @api_publish_only_gadgets.validate(
+        resp=Response(HTTP_200=ExampleModel),
+        publish=False,
+        category="gadgets",
+        tags=["gadgets"],
+    )
+    def get(self, gadget_id):
+        pass
+
+
+def test_spec_by_category_with_zero_published_routes_does_not_raise():
+    """A category where every route is publish=False never gets a
+    routes_by_category entry (_generate_spec() only creates one once it
+    processes a route belonging to that category) -- spec_by_category()
+    used to index into routes_by_category with a plain `[category]`,
+    raising a raw KeyError instead of returning a valid, empty document.
+    """
+    app = Flask(__name__)
+    view = UnpublishedGadgetView.as_view("UnpublishedGadgetView")
+    app.add_url_rule("/gadgets/<uuid:gadget_id>", view_func=view)
+    api_publish_only_gadgets.register(app)
+    api_publish_only_gadgets.register_class_view_apidoc(UnpublishedGadgetView)
+
+    spec = api_publish_only_gadgets.spec_by_category("gadgets")
+    assert spec["paths"] == {}

@@ -117,8 +117,15 @@ class FlaskPydanticSpec:
             self._spec = self._generate_spec()
 
         if category not in self._spec_by_category:
+            # A category with zero *published* routes (e.g. every route
+            # decorated with publish=False in "publish_only" mode) never
+            # gets a routes_by_category entry -- _generate_spec() only adds
+            # one once it processes a route that actually belongs to that
+            # category. Fall back to an empty routes dict instead of a
+            # raw KeyError, so requesting a real-but-currently-empty
+            # category's spec returns a valid (empty) document.
             self._spec_by_category[category] = self._generate_spec_common(
-                self.routes_by_category[category], category
+                self.routes_by_category.get(category, {}), category
             )
         return self._spec_by_category[category]
 
