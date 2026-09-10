@@ -1,5 +1,6 @@
 import logging
 
+from .flask_backend import Context, ValidatedRequest, request_context
 from .types import Response, Request, MultipartFormRequest, FileResponse
 from .spec import FlaskPydanticSpec
 
@@ -9,6 +10,9 @@ __all__ = [
     "Request",
     "MultipartFormRequest",
     "FileResponse",
+    "Context",
+    "ValidatedRequest",
+    "request_context",
 ]
 
 # setup library logging
