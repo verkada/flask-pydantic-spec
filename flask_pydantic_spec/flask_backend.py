@@ -47,9 +47,14 @@ class ValidatedRequest(FlaskRequest):
 def request_context(request: FlaskRequest) -> Context:
     """Returns `request`'s `.context`, as attached by `FlaskBackend.request_validation`.
 
-    Raises `AttributeError` at runtime exactly as `request.context` would if
-    the view isn't wrapped by `@openapi.validate`.
+    Raises `RuntimeError` if the view isn't wrapped by `@openapi.validate`,
+    since `.context` will never have been attached.
     """
+    if not hasattr(request, "context"):
+        raise RuntimeError(
+            "request_context() called on a request with no .context -- "
+            "is this endpoint wrapped in @openapi.validate?"
+        )
     return cast(ValidatedRequest, request).context
 
 
