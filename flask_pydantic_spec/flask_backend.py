@@ -2,7 +2,18 @@ import gzip
 import json
 import logging
 
-from typing import Optional, Mapping, Callable, Any, Tuple, List, Type, Iterable, Dict, cast
+from typing import (
+    Optional,
+    Mapping,
+    Callable,
+    Any,
+    Tuple,
+    List,
+    Type,
+    Iterable,
+    Dict,
+    cast,
+)
 from dataclasses import dataclass
 
 from flask import (
