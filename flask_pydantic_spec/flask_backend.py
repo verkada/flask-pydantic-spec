@@ -2,7 +2,7 @@ import gzip
 import json
 import logging
 
-from typing import Optional, Mapping, Callable, Any, Tuple, List, Type, Iterable, Dict
+from typing import Optional, Mapping, Callable, Any, Tuple, List, Type, Iterable, Dict, cast
 from dataclasses import dataclass
 
 from flask import (
@@ -30,6 +30,27 @@ class Context:
     body: Optional[BaseModel]
     headers: Optional[BaseModel]
     cookies: Optional[BaseModel]
+
+
+class ValidatedRequest(FlaskRequest):
+    """A `Request` that has gone through `FlaskBackend.request_validation`.
+
+    `request_validation` attaches `context` via `setattr()` at runtime, which
+    Flask's own `Request` has no static declaration for. This subclass is
+    never actually instantiated -- it exists only so `request_context()` can
+    hand callers a statically-typed view of the same object.
+    """
+
+    context: Context
+
+
+def request_context(request: FlaskRequest) -> Context:
+    """Returns `request`'s `.context`, as attached by `FlaskBackend.request_validation`.
+
+    Raises `AttributeError` at runtime exactly as `request.context` would if
+    the view isn't wrapped by `@openapi.validate`.
+    """
+    return cast(ValidatedRequest, request).context
 
 
 class FlaskBackend:
