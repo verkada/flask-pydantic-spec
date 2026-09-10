@@ -17,6 +17,7 @@ from .utils import (
     parse_params,
     parse_resp,
     parse_name,
+    parse_rule,
     default_before_handler,
     default_after_handler,
 )
@@ -549,5 +550,15 @@ class FlaskPydanticSpec:
         rules = self.app.url_map._rules_by_endpoint[endpoint]
         for rule in rules:
             endpoint = rule.endpoint
-            rule_string = rule.rule.replace("<", "{").replace(">", "}")
+            # Build the path key the same way parse_path() does: strip each
+            # converter's type prefix (e.g. "uuid:", "int:") and keep only the
+            # variable name. A naive "<"->"{" / ">"->"}" replacement leaves the
+            # prefix in place ("<uuid:x>" -> "{uuid:x}" instead of "{x}"),
+            # which never matches parse_path()'s key for any typed converter
+            # -- silently dropping the route's publish/category/etc metadata
+            # in _generate_spec(), regardless of what was actually declared.
+            rule_string = "".join(
+                variable if converter is None else f"{{{variable}}}"
+                for converter, _arguments, variable in parse_rule(rule)
+            )
             self.class_view_apispec[rule_string] = self.class_view_api_info[endpoint]

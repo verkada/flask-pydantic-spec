@@ -3,6 +3,7 @@ from typing import Optional
 
 import pytest
 from flask import Flask
+from flask.views import MethodView
 from typing import List
 from openapi_spec_validator import validate as validate_v3_spec
 from pydantic.v1 import BaseModel, Field, StrictFloat
@@ -232,3 +233,43 @@ def test_openapi_deprecated():
 
     assert spec["paths"]["/lone"]["post"]["deprecated"] == True
     assert "deprecated" not in spec["paths"]["/lone"]["get"]
+
+
+api_publish_only = FlaskPydanticSpec("flask", mode="publish_only")
+
+
+class WidgetView(MethodView):
+    @api_publish_only.validate(
+        resp=Response(HTTP_200=ExampleModel),
+        publish=True,
+        category="widgets",
+        tags=["widgets"],
+    )
+    def get(self, widget_id):
+        pass
+
+
+def test_class_view_path_with_typed_converter_is_published():
+    """A class-based (MethodView) route whose path uses a typed Werkzeug
+    converter (e.g. ``<uuid:widget_id>``) must still be published when
+    ``publish=True``, in "publish_only" mode.
+
+    register_class_view_apidoc() used to key ``class_view_apispec`` via a
+    naive "<" -> "{" / ">" -> "}" string replacement on the raw rule, which
+    left the converter prefix in place ("<uuid:widget_id>" ->
+    "{uuid:widget_id}"). _generate_spec() looks the same route up via
+    parse_path(), which correctly strips the converter ("{widget_id}"). The
+    keys never matched for any typed converter, so the route silently fell
+    through to the "not a class view" branch and was treated as unpublished
+    regardless of its real `publish` value.
+    """
+    app = Flask(__name__)
+    view = WidgetView.as_view("WidgetView")
+    app.add_url_rule("/widgets/<uuid:widget_id>", view_func=view)
+    api_publish_only.register(app)
+    api_publish_only.register_class_view_apidoc(WidgetView)
+
+    assert get_paths(api_publish_only.spec) == ["/widgets/{widget_id}"]
+    assert list(api_publish_only.spec["paths"]["/widgets/{widget_id}"].keys()) == [
+        "get"
+    ]
