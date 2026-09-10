@@ -4,7 +4,7 @@ from typing import Optional
 import pytest
 from flask import Flask
 from typing import List
-from openapi_spec_validator import validate_v3_spec
+from openapi_spec_validator import validate as validate_v3_spec
 from pydantic.v1 import BaseModel, Field, StrictFloat
 
 from flask_pydantic_spec import Response
@@ -194,10 +194,26 @@ def test_two_endpoints_with_the_same_path():
 
 
 def test_valid_openapi_spec():
-    app = create_app()
-    api.register(app)
-    spec = api.spec
-    validate_v3_spec(spec)
+    # A dedicated FlaskPydanticSpec instance and fully-decorated app, rather
+    # than the shared `api` singleton / create_app() fixture: `spec` is
+    # cached forever after its first access (see spec_by_category()'s
+    # `if not hasattr(self, "_spec")`), so reusing `api` here would just
+    # return whatever an earlier test already cached. Separately,
+    # create_app() deliberately includes undecorated/bare-decorator routes
+    # (to exercise bypass-mode and route-merging behavior elsewhere in this
+    # file), which produce empty `responses` objects that a strict OpenAPI
+    # v3 validator correctly rejects (every operation must document at least
+    # one response).
+    app = Flask(__name__)
+    local_api = FlaskPydanticSpec("flask")
+
+    @app.route("/valid")
+    @local_api.validate(resp=Response(HTTP_200=ExampleModel))
+    def valid():
+        pass
+
+    local_api.register(app)
+    validate_v3_spec(local_api.spec)
 
 
 def test_openapi_tags():
